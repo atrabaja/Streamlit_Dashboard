@@ -19,9 +19,9 @@ os.environ["OMP_NUM_THREADS"] = "5"  # Adjust this if necessary
 st.title("Customer Analysis Dashboard")
 
 # Load datasets
-df1 = pd.read_csv("data/cleaned_customer_demographics.csv")
-df2 = pd.read_csv("data/cleaned_customer_transactions.csv")
-df3 = pd.read_csv("data/cleaned_social_media_interaction.csv")
+df1 = pd.read_csv("C:\\Users\\Angel Rabaja\\Downloads\\MO-IT125 Homework_ Data Preprocessing of Machine Learning Solution Project Dataset BSIT-H3103 Mondero, GV., Rabaja, A., Vicente, JB. - cleaned_customer_demographics.csv")
+df2 = pd.read_csv("C:\\Users\\Angel Rabaja\\Downloads\\MO-IT125 Homework_ Data Preprocessing of Machine Learning Solution Project Dataset BSIT-H3103 Mondero, GV., Rabaja, A., Vicente, JB. - cleaned_customer_transactions.csv")
+df3 = pd.read_csv("C:\\Users\\Angel Rabaja\\Downloads\\MO-IT125 Homework_ Data Preprocessing of Machine Learning Solution Project Dataset BSIT-H3103 Mondero, GV., Rabaja, A., Vicente, JB. - cleaned_social_media_interaction.csv")
 
 # Display initial datasets for exploration
 st.subheader("Customer Demographics Data")
