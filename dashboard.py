@@ -82,11 +82,11 @@ rfm_df = merged_df.groupby('Customer ID').agg({
 st.write("### Adjust RFM Log Values")
 col1, col2, col3 = st.columns(3)
 with col1:
-    recency_log_adjust = st.slider("Adjust Recency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    recency_log_adjust = st.slider("Recency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
 with col2:
-    frequency_log_adjust = st.slider("Adjust Frequency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    frequency_log_adjust = st.slider("Frequency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
 with col3:
-    monetary_log_adjust = st.slider("Adjust Monetary Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    monetary_log_adjust = st.slider("Monetary Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
 
 # Apply adjustments to RFM log values
 rfm_df['Recency_log'] = np.log1p(rfm_df['Recency']) * recency_log_adjust
