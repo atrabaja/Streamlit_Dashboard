@@ -15,18 +15,18 @@ from sklearn.cluster import KMeans
 st.markdown(
     """
     <style>
-    /* Set background to white */
+    /* Set background to #FFFFFF */
     .reportview-container {
         background: white;
     }
     .sidebar .sidebar-content {
-        background: white;
+        background: #FFFFFF;
     }
     
     /* Set primary color */
     .stButton>button {
         background-color: #289097;
-        color: white;
+        color: #FFFFFF;
         border-radius: 5px;
         border: none;
     }
