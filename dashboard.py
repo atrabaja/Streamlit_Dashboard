@@ -107,7 +107,7 @@ plt.colorbar(scatter, ax=ax)
 st.pyplot(fig)
 
 # Display updated Customer Segmentation Insights table
-st.write("### Customer Segmentation Insights Table")
+st.write("### Customer Segmentation Insights")
 cluster_insights = rfm_df.groupby('Cluster').agg(
     Customer_Count=('Recency', 'size'),
     Avg_Recency=('Recency', 'mean'),
@@ -118,8 +118,10 @@ cluster_insights = rfm_df.groupby('Cluster').agg(
 # Display insights as an interactive table
 st.dataframe(cluster_insights)
 
-# Model Training for CLV Prediction
+# CLV Prediction Model, updated with clustering changes
 st.write("### CLV Prediction Model")
+
+# Train-test split and model training based on new segmentation
 X = rfm_df[['Recency', 'Frequency', 'Monetary']]
 y = rfm_df['Monetary']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -129,6 +131,7 @@ model = Pipeline(steps=[
     ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
 ])
 
+# Re-train the model based on updated clusters
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
