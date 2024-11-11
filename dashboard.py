@@ -49,7 +49,7 @@ st.markdown(
 )
 
 # Page title and description
-st.title("Interactive CLV Prediction & Customer Segmentation Dashboard")
+st.title("Customer Lifetime Value Prediction & Customer Segmentation Dashboard")
 st.write("Explore customer segments and predict Customer Lifetime Value (CLV) with an interactive dashboard.")
 
 # Load data
@@ -82,11 +82,11 @@ rfm_df = merged_df.groupby('Customer ID').agg({
 st.write("### Adjust RFM Log Values")
 col1, col2, col3 = st.columns(3)
 with col1:
-    recency_log_adjust = st.slider("Adjust Recency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    recency_log_adjust = st.slider("Recency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
 with col2:
-    frequency_log_adjust = st.slider("Adjust Frequency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    frequency_log_adjust = st.slider("Frequency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
 with col3:
-    monetary_log_adjust = st.slider("Adjust Monetary Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+    monetary_log_adjust = st.slider("Monetary Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
 
 # Apply adjustments to RFM log values
 rfm_df['Recency_log'] = np.log1p(rfm_df['Recency']) * recency_log_adjust
@@ -110,7 +110,7 @@ selected_customer_cluster = rfm_df.loc[customer_id, 'Cluster']
 filtered_df = rfm_df[rfm_df['Cluster'] == selected_customer_cluster]
 
 # Dropdown for X and Y axis selection in scatter plot
-st.write("### Scatter Plot: Customer Segmentation")
+st.write("### Customer Segmentation based on RFM")
 x_axis_option = st.selectbox("Select X-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
 y_axis_option = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
 
@@ -118,43 +118,15 @@ y_axis_option = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recenc
 fig, ax = plt.subplots()
 scatter = ax.scatter(rfm_df[x_axis_option], rfm_df[y_axis_option], c=rfm_df['Cluster'], cmap='viridis', alpha=0.6)
 ax.scatter(selected_customer_data[x_axis_option], selected_customer_data[y_axis_option], color='red', label='Selected Customer', s=100, edgecolor='black')
-ax.set_title('Customer Segmentation based on RFM')
+ax.set_title('')
 ax.set_xlabel(x_axis_option)
 ax.set_ylabel(y_axis_option)
 plt.colorbar(scatter, ax=ax)
 plt.legend()
 st.pyplot(fig)
 
-# Additional visualizations: Histogram and Box Plot for the selected cluster
-st.write("### Cluster Distributions")
-col1, col2 = st.columns(2)
-
-# Histogram for the selected cluster's RFM metrics
-with col1:
-    st.write(f"Histogram of RFM Metrics for Cluster {selected_customer_cluster}")
-    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
-    sns.histplot(filtered_df['Recency'], bins=10, ax=axs[0], kde=True)
-    axs[0].set_title('Recency')
-    sns.histplot(filtered_df['Frequency'], bins=10, ax=axs[1], kde=True)
-    axs[1].set_title('Frequency')
-    sns.histplot(filtered_df['Monetary'], bins=10, ax=axs[2], kde=True)
-    axs[2].set_title('Monetary')
-    st.pyplot(fig)
-
-# Box Plot for the selected cluster's RFM metrics
-with col2:
-    st.write(f"Box Plot of RFM Metrics for Cluster {selected_customer_cluster}")
-    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
-    sns.boxplot(y=filtered_df['Recency'], ax=axs[0])
-    axs[0].set_title('Recency')
-    sns.boxplot(y=filtered_df['Frequency'], ax=axs[1])
-    axs[1].set_title('Frequency')
-    sns.boxplot(y=filtered_df['Monetary'], ax=axs[2])
-    axs[2].set_title('Monetary')
-    st.pyplot(fig)
-
 # Display updated Customer Segmentation Insights table based on selected customer
-st.write(f"### Customer Segmentation Insights for Cluster {selected_customer_cluster}")
+st.write(f"### Customer Segmentation Insights for Cluster: {selected_customer_cluster}")
 cluster_insights = filtered_df.groupby('Cluster').agg(
     Customer_Count=('Recency', 'size'),
     Avg_Recency=('Recency', 'mean'),
@@ -165,8 +137,8 @@ cluster_insights = filtered_df.groupby('Cluster').agg(
 # Display insights as an interactive table
 st.dataframe(cluster_insights)
 
-# CLV Prediction Model, updated with clustering changes
-st.write("### CLV Prediction Model")
+# CLV Prediction Result
+st.write("### CLV Prediction Result")
 
 # Train-test split and model training based on new segmentation
 X = rfm_df[['Recency', 'Frequency', 'Monetary']]
@@ -178,13 +150,26 @@ model = Pipeline(steps=[
     ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
 ])
 
-# Re-train the model based on updated clusters
+# Train the model and calculate Predicted CLV for each customer
 model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
+rfm_df['Predicted_CLV'] = model.predict(X)
 
-# Model Evaluation
-mae = mean_absolute_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
-st.write(f"**Model Performance:**")
-st.write(f"Mean Absolute Error (MAE): {mae:.2f}")
-st.write(f"R² Score: {r2:.2f}")
+# Define segmentation based on CLV score
+rfm_df['Segment'] = pd.qcut(rfm_df['Predicted_CLV'], q=4, labels=['Low Value', 'Mid Value', 'High Value', 'Top Value'])
+
+# Display selected customer’s Predicted CLV Score and Segment
+predicted_clv = rfm_df.loc[customer_id, 'Predicted_CLV']
+segment_label = rfm_df.loc[customer_id, 'Segment']
+st.write(f"**Predicted CLV Score for Customer: {customer_id}:** ${predicted_clv:.2f}")
+st.write(f"**Customer Segment:** {segment_label}")
+
+# Actionable Insights based on segment
+st.write("**Actionable Insights:**")
+if segment_label == 'Top Value':
+    st.write("Retention strategies, loyalty rewards, and exclusive offers are key to maintaining engagement for high-value customers.")
+elif segment_label == 'High Value':
+    st.write("Upselling or cross-selling opportunities with personalized recommendations can increase engagement and revenue.")
+elif segment_label == 'Mid Value':
+    st.write("Targeted promotions may encourage increased purchase frequency and customer retention.")
+else:
+    st.write("Re-engagement campaigns and personalized offers may help retain low-value customers.")
