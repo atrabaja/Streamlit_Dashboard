@@ -49,7 +49,7 @@ st.markdown(
 )
 
 # Page title and description
-st.title("Interactive CLV Prediction & Customer Segmentation Dashboard")
+st.title("Customer Lifetime Value Prediction & Customer Segmentation Dashboard")
 st.write("Explore customer segments and predict Customer Lifetime Value (CLV) with an interactive dashboard.")
 
 # Load data
@@ -92,7 +92,7 @@ kmeans = KMeans(n_clusters=4, random_state=42)
 rfm_df['Cluster'] = kmeans.fit_predict(rfm_features)
 
 # Interactive Histogram
-st.write("### Interactive Histogram")
+st.write("### RFM Distribution")
 selected_feature_hist = st.selectbox("Select Feature for Histogram:", ['Recency', 'Frequency', 'Monetary'])
 fig, ax = plt.subplots()
 sns.histplot(rfm_df[selected_feature_hist], bins=20, kde=True, ax=ax)
@@ -100,7 +100,7 @@ ax.set_title(f"Distribution of {selected_feature_hist}")
 st.pyplot(fig)
 
 # Scatter Plot for Clusters
-st.write("### Interactive Scatter Plot: Customer Segmentation")
+st.write("### Customer Segmentation")
 selected_feature_x = st.selectbox("Select X-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
 selected_feature_y = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
 
@@ -134,7 +134,7 @@ st.write(f"Mean Absolute Error (MAE): {mae:.2f}")
 st.write(f"R² Score: {r2:.2f}")
 
 # Cluster Insights Table
-st.write("### Customer Segmentation Insights Table")
+st.write("### Customer Segmentation Insights")
 cluster_insights = rfm_df.groupby('Cluster').agg(
     Customer_Count=('Recency', 'size'),
     Avg_Recency=('Recency', 'mean'),
