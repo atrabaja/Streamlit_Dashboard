@@ -49,7 +49,7 @@ st.markdown(
 )
 
 # Page title and description
-st.title("Customer Lifetime Value Prediction & Customer Segmentation Dashboard")
+st.title("Interactive CLV Prediction & Customer Segmentation Dashboard")
 st.write("Explore customer segments and predict Customer Lifetime Value (CLV) with an interactive dashboard.")
 
 # Load data
@@ -78,10 +78,20 @@ rfm_df = merged_df.groupby('Customer ID').agg({
     'Amount': 'Monetary'
 })
 
-# Log Transformations
-rfm_df['Recency_log'] = np.log1p(rfm_df['Recency'])
-rfm_df['Frequency_log'] = np.log1p(rfm_df['Frequency'])
-rfm_df['Monetary_log'] = np.log1p(rfm_df['Monetary'])
+# Sliders to adjust Recency_log, Frequency_log, and Monetary_log
+st.write("### Adjust RFM Log Values")
+col1, col2, col3 = st.columns(3)
+with col1:
+    recency_log_adjust = st.slider("Adjust Recency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+with col2:
+    frequency_log_adjust = st.slider("Adjust Frequency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+with col3:
+    monetary_log_adjust = st.slider("Adjust Monetary Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
+
+# Apply adjustments to RFM log values
+rfm_df['Recency_log'] = np.log1p(rfm_df['Recency']) * recency_log_adjust
+rfm_df['Frequency_log'] = np.log1p(rfm_df['Frequency']) * frequency_log_adjust
+rfm_df['Monetary_log'] = np.log1p(rfm_df['Monetary']) * monetary_log_adjust
 
 # Interactive customer selection
 customer_id = st.selectbox("Select a Customer ID for detailed analysis:", rfm_df.index)
@@ -100,7 +110,7 @@ selected_customer_cluster = rfm_df.loc[customer_id, 'Cluster']
 filtered_df = rfm_df[rfm_df['Cluster'] == selected_customer_cluster]
 
 # Scatter Plot for Clusters
-st.write("### Customer Segmentation")
+st.write("### Scatter Plot: Customer Segmentation")
 fig, ax = plt.subplots()
 scatter = ax.scatter(rfm_df['Recency_log'], rfm_df['Monetary_log'], c=rfm_df['Cluster'], cmap='viridis', alpha=0.6)
 ax.scatter(selected_customer_data['Recency_log'], selected_customer_data['Monetary_log'], color='red', label='Selected Customer', s=100, edgecolor='black')
@@ -117,7 +127,7 @@ col1, col2 = st.columns(2)
 
 # Histogram for the selected cluster's RFM metrics
 with col1:
-    st.write(f"RFM Metrics for Cluster {selected_customer_cluster}")
+    st.write(f"Histogram of RFM Metrics for Cluster {selected_customer_cluster}")
     fig, axs = plt.subplots(1, 3, figsize=(15, 4))
     sns.histplot(filtered_df['Recency'], bins=10, ax=axs[0], kde=True)
     axs[0].set_title('Recency')
@@ -129,7 +139,7 @@ with col1:
 
 # Box Plot for the selected cluster's RFM metrics
 with col2:
-    st.write(f"RFM Metrics for Cluster {selected_customer_cluster}")
+    st.write(f"Box Plot of RFM Metrics for Cluster {selected_customer_cluster}")
     fig, axs = plt.subplots(1, 3, figsize=(15, 4))
     sns.boxplot(y=filtered_df['Recency'], ax=axs[0])
     axs[0].set_title('Recency')
