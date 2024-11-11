@@ -11,8 +11,40 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.cluster import KMeans
 
-# Set up the page title and description
-st.title("Interactive CLV Prediction & Customer Segmentation Dashboard")
+# Custom CSS to set the background and secondary color
+st.markdown(
+    """
+    <style>
+    /* Set background to white */
+    .reportview-container {
+        background: white;
+    }
+    .sidebar .sidebar-content {
+        background: white;
+    }
+    
+    /* Set primary color */
+    .stButton>button {
+        background-color: #289097;
+        color: white;
+        border-radius: 5px;
+        border: none;
+    }
+    .stSelectbox, .stSlider {
+        color: #289097;
+    }
+
+    /* Header adjustments */
+    h1, h2, h3, h4, h5, h6 {
+        color: #289097;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Page title and description
+st.title("CLV Prediction & Customer Segmentation Dashboard")
 st.write("Explore customer segments and predict Customer Lifetime Value (CLV) with an interactive dashboard.")
 
 # Load data
@@ -49,47 +81,27 @@ rfm_df['Monetary_log'] = np.log1p(rfm_df['Monetary'])
 st.write("### RFM Table with Log Transformations")
 st.dataframe(rfm_df.head())
 
-# Interactive Section for Clustering and Visualizations
-st.write("### Clustering and Visualization")
+# Clustering with Fixed 4 Clusters
+rfm_features = rfm_df[['Recency_log', 'Frequency_log', 'Monetary_log']]
+kmeans = KMeans(n_clusters=4, random_state=42)
+rfm_df['Cluster'] = kmeans.fit_predict(rfm_features)
 
-# Dropdown for cluster features
-selected_feature_x = st.selectbox("Select X-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
-selected_feature_y = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
-
-# Histogram: Distribution of selected feature
-st.write("### Histogram")
+# Interactive Histogram
+st.write("### Interactive Histogram")
 selected_feature_hist = st.selectbox("Select Feature for Histogram:", ['Recency', 'Frequency', 'Monetary'])
 fig, ax = plt.subplots()
 sns.histplot(rfm_df[selected_feature_hist], bins=20, kde=True, ax=ax)
-ax.set_title(f"Distribution of {selected_feature_hist}")
+ax.set_title(f"RFM Distribution")
 st.pyplot(fig)
-
-# Line chart to show cluster count vs. WCSS (Elbow Method)
-st.write("### Line Chart: Elbow Method")
-wcss = []
-rfm_features = rfm_df[['Recency_log', 'Frequency_log', 'Monetary_log']]
-for i in range(1, 11):
-    kmeans = KMeans(n_clusters=i, random_state=42)
-    kmeans.fit(rfm_features)
-    wcss.append(kmeans.inertia_)
-
-fig, ax = plt.subplots()
-ax.plot(range(1, 11), wcss, marker='o', linestyle='--')
-ax.set_title('Elbow Method for Optimal Clusters')
-ax.set_xlabel('Number of Clusters')
-ax.set_ylabel('WCSS')
-st.pyplot(fig)
-
-# Clustering with Optimal Cluster Number
-optimal_clusters = st.slider("Select Optimal Number of Clusters", 1, 10, 4)
-kmeans = KMeans(n_clusters=optimal_clusters, random_state=42)
-rfm_df['Cluster'] = kmeans.fit_predict(rfm_features)
 
 # Scatter Plot for Clusters
-st.write("### Scatter Plot: Customer Segmentation")
+st.write("### Interactive Scatter Plot: Customer Segmentation")
+selected_feature_x = st.selectbox("Select X-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
+selected_feature_y = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
+
 fig, ax = plt.subplots()
 scatter = ax.scatter(rfm_df[selected_feature_x], rfm_df[selected_feature_y], c=rfm_df['Cluster'], cmap='viridis')
-ax.set_title('Customer Segmentation based on RFM')
+ax.set_title('RFM Customer Segmentation')
 ax.set_xlabel(selected_feature_x)
 ax.set_ylabel(selected_feature_y)
 plt.colorbar(scatter, ax=ax)
@@ -116,12 +128,14 @@ st.write(f"**Model Performance:**")
 st.write(f"Mean Absolute Error (MAE): {mae:.2f}")
 st.write(f"R² Score: {r2:.2f}")
 
-# Streamlit insights for each customer cluster
+# Cluster Insights Table
 st.write("### Customer Segmentation Insights")
-for cluster in sorted(rfm_df['Cluster'].unique()):
-    st.write(f"**Cluster {cluster}:**")
-    cluster_data = rfm_df[rfm_df['Cluster'] == cluster]
-    st.write(f"Count: {len(cluster_data)}")
-    st.write(f"Average Recency: {cluster_data['Recency'].mean():.2f}")
-    st.write(f"Average Frequency: {cluster_data['Frequency'].mean():.2f}")
-    st.write(f"Average Monetary: {cluster_data['Monetary'].mean():.2f}")
+cluster_insights = rfm_df.groupby('Cluster').agg(
+    Customer_Count=('Recency', 'size'),
+    Avg_Recency=('Recency', 'mean'),
+    Avg_Frequency=('Frequency', 'mean'),
+    Avg_Monetary=('Monetary', 'mean')
+).reset_index()
+
+# Display insights as an interactive table
+st.dataframe(cluster_insights)
