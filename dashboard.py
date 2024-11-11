@@ -111,6 +111,34 @@ plt.colorbar(scatter, ax=ax)
 plt.legend()
 st.pyplot(fig)
 
+# Additional visualizations: Histogram and Box Plot for the selected cluster
+st.write("### Cluster Distributions")
+col1, col2 = st.columns(2)
+
+# Histogram for the selected cluster's RFM metrics
+with col1:
+    st.write(f"Histogram of RFM Metrics for Cluster {selected_customer_cluster}")
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+    sns.histplot(filtered_df['Recency'], bins=10, ax=axs[0], kde=True)
+    axs[0].set_title('Recency')
+    sns.histplot(filtered_df['Frequency'], bins=10, ax=axs[1], kde=True)
+    axs[1].set_title('Frequency')
+    sns.histplot(filtered_df['Monetary'], bins=10, ax=axs[2], kde=True)
+    axs[2].set_title('Monetary')
+    st.pyplot(fig)
+
+# Box Plot for the selected cluster's RFM metrics
+with col2:
+    st.write(f"Box Plot of RFM Metrics for Cluster {selected_customer_cluster}")
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+    sns.boxplot(y=filtered_df['Recency'], ax=axs[0])
+    axs[0].set_title('Recency')
+    sns.boxplot(y=filtered_df['Frequency'], ax=axs[1])
+    axs[1].set_title('Frequency')
+    sns.boxplot(y=filtered_df['Monetary'], ax=axs[2])
+    axs[2].set_title('Monetary')
+    st.pyplot(fig)
+
 # Display updated Customer Segmentation Insights table based on selected customer
 st.write(f"### Customer Segmentation Insights for Cluster {selected_customer_cluster}")
 cluster_insights = filtered_df.groupby('Cluster').agg(
