@@ -83,32 +83,37 @@ rfm_df['Recency_log'] = np.log1p(rfm_df['Recency'])
 rfm_df['Frequency_log'] = np.log1p(rfm_df['Frequency'])
 rfm_df['Monetary_log'] = np.log1p(rfm_df['Monetary'])
 
+# Interactive customer selection
+customer_id = st.selectbox("Select a Customer ID for detailed analysis:", rfm_df.index)
+selected_customer_data = rfm_df.loc[customer_id]
+
 st.write("### RFM Table with Log Transformations")
 st.dataframe(rfm_df.head())
 
-# Interactive section for clustering
-st.write("### Interactive Clustering and Visualization")
-selected_feature_x = st.selectbox("Select X-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
-selected_feature_y = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
-num_clusters = st.slider("Select Number of Clusters:", 2, 10, 4)
-
-# Clustering with dynamic cluster number
+# Clustering with fixed 4 clusters
 rfm_features = rfm_df[['Recency_log', 'Frequency_log', 'Monetary_log']]
-kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-rfm_df['Cluster'] = kmeans.fit_predict(rfm_features)
+kmeans = KMeans(n_clusters=4, random_state=42)
+rfm_df['Cluster'] = kmeans.fit_predict(rfm_features) + 1  # Assigning cluster numbers as 1, 2, 3, 4
+
+# Filter to display the selected customer's cluster details
+selected_customer_cluster = rfm_df.loc[customer_id, 'Cluster']
+filtered_df = rfm_df[rfm_df['Cluster'] == selected_customer_cluster]
 
 # Scatter Plot for Clusters
+st.write("### Scatter Plot: Customer Segmentation")
 fig, ax = plt.subplots()
-scatter = ax.scatter(rfm_df[selected_feature_x], rfm_df[selected_feature_y], c=rfm_df['Cluster'], cmap='viridis')
+scatter = ax.scatter(rfm_df['Recency_log'], rfm_df['Monetary_log'], c=rfm_df['Cluster'], cmap='viridis', alpha=0.6)
+ax.scatter(selected_customer_data['Recency_log'], selected_customer_data['Monetary_log'], color='red', label='Selected Customer', s=100, edgecolor='black')
 ax.set_title('Customer Segmentation based on RFM')
-ax.set_xlabel(selected_feature_x)
-ax.set_ylabel(selected_feature_y)
+ax.set_xlabel('Recency_log')
+ax.set_ylabel('Monetary_log')
 plt.colorbar(scatter, ax=ax)
+plt.legend()
 st.pyplot(fig)
 
-# Display updated Customer Segmentation Insights table
-st.write("### Customer Segmentation Insights")
-cluster_insights = rfm_df.groupby('Cluster').agg(
+# Display updated Customer Segmentation Insights table based on selected customer
+st.write(f"### Customer Segmentation Insights for Cluster {selected_customer_cluster}")
+cluster_insights = filtered_df.groupby('Cluster').agg(
     Customer_Count=('Recency', 'size'),
     Avg_Recency=('Recency', 'mean'),
     Avg_Frequency=('Frequency', 'mean'),
