@@ -11,22 +11,27 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.cluster import KMeans
 
-# Custom CSS to set the background and secondary color
+# Custom CSS to set the background, font colors, and secondary color
 st.markdown(
     """
     <style>
-    /* Set background to #FFFFFF */
+    /* Set background to white */
     .reportview-container {
         background: white;
     }
     .sidebar .sidebar-content {
-        background: #FFFFFF;
+        background: white;
     }
-    
-    /* Set primary color */
+
+    /* Set font color to black */
+    body, .markdown-text-container, .css-1d391kg p, .css-1h0j3t5, .css-qrbaxs, .css-1r6slb0, .css-2trqyj {
+        color: black;
+    }
+
+    /* Primary color styling */
     .stButton>button {
         background-color: #289097;
-        color: #FFFFFF;
+        color: white;
         border-radius: 5px;
         border: none;
     }
@@ -44,7 +49,7 @@ st.markdown(
 )
 
 # Page title and description
-st.title("CLV Prediction & Customer Segmentation Dashboard")
+st.title("Interactive CLV Prediction & Customer Segmentation Dashboard")
 st.write("Explore customer segments and predict Customer Lifetime Value (CLV) with an interactive dashboard.")
 
 # Load data
@@ -91,7 +96,7 @@ st.write("### Interactive Histogram")
 selected_feature_hist = st.selectbox("Select Feature for Histogram:", ['Recency', 'Frequency', 'Monetary'])
 fig, ax = plt.subplots()
 sns.histplot(rfm_df[selected_feature_hist], bins=20, kde=True, ax=ax)
-ax.set_title(f"RFM Distribution")
+ax.set_title(f"Distribution of {selected_feature_hist}")
 st.pyplot(fig)
 
 # Scatter Plot for Clusters
@@ -101,7 +106,7 @@ selected_feature_y = st.selectbox("Select Y-axis feature for Scatter Plot:", ['R
 
 fig, ax = plt.subplots()
 scatter = ax.scatter(rfm_df[selected_feature_x], rfm_df[selected_feature_y], c=rfm_df['Cluster'], cmap='viridis')
-ax.set_title('RFM Customer Segmentation')
+ax.set_title('Customer Segmentation based on RFM')
 ax.set_xlabel(selected_feature_x)
 ax.set_ylabel(selected_feature_y)
 plt.colorbar(scatter, ax=ax)
@@ -129,7 +134,7 @@ st.write(f"Mean Absolute Error (MAE): {mae:.2f}")
 st.write(f"R² Score: {r2:.2f}")
 
 # Cluster Insights Table
-st.write("### Customer Segmentation Insights")
+st.write("### Customer Segmentation Insights Table")
 cluster_insights = rfm_df.groupby('Cluster').agg(
     Customer_Count=('Recency', 'size'),
     Avg_Recency=('Recency', 'mean'),
