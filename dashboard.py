@@ -53,22 +53,26 @@ st.title("Customer Lifetime Value Prediction & Customer Segmentation Dashboard")
 st.write("Explore customer segments and predict Customer Lifetime Value (CLV) with an interactive dashboard.")
 
 # Load data
-df1 = pd.read_csv("data/cleaned_customer_demographics.csv")
-df2 = pd.read_csv("data/cleaned_customer_transactions.csv")
-df3 = pd.read_csv("data/cleaned_social_media_interaction.csv")
+uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
-# Data Merging
-merged_df = pd.merge(df1, df2, on='Customer ID', how='inner')
-merged_df = pd.merge(merged_df, df3, on='Customer ID', how='inner')
+# Load data if uploaded; else, use default data
+if uploaded_file is not None:
+    df1 = pd.read_csv(uploaded_file)
+else:
+    df1 = pd.read_csv("data/cleaned_customer_demographics.csv")
+    df2 = pd.read_csv("data/cleaned_customer_transactions.csv")
+    df3 = pd.read_csv("data/cleaned_social_media_interaction.csv")
+    df1 = pd.merge(df1, df2, on='Customer ID', how='inner')
+    df1 = pd.merge(df1, df3, on='Customer ID', how='inner')
 
-# Display merged data preview
-st.write("### Merged Data Preview")
-st.dataframe(merged_df.head())
+# Display the dataset to be used
+st.write("### Data Preview")
+st.dataframe(df1.head())
 
 # Date Parsing and Recency Calculation
-merged_df['Transaction Date'] = pd.to_datetime(merged_df['Transaction Date'], errors='coerce')
-reference_date = merged_df['Transaction Date'].max()
-rfm_df = merged_df.groupby('Customer ID').agg({
+df1['Transaction Date'] = pd.to_datetime(df1['Transaction Date'], errors='coerce')
+reference_date = df1['Transaction Date'].max()
+rfm_df = df1.groupby('Customer ID').agg({
     'Transaction Date': lambda x: (reference_date - x.max()).days,
     'Customer ID': 'count',
     'Amount': 'sum'
@@ -79,7 +83,7 @@ rfm_df = merged_df.groupby('Customer ID').agg({
 })
 
 # Sliders to adjust Recency_log, Frequency_log, and Monetary_log
-st.write("### Adjust RFM Log Values")
+st.write("### Modify RFM Log Parameters")
 col1, col2, col3 = st.columns(3)
 with col1:
     recency_log_adjust = st.slider("Recency Log", min_value=0.0, max_value=10.0, value=1.0, step=0.1)
@@ -110,7 +114,7 @@ selected_customer_cluster = rfm_df.loc[customer_id, 'Cluster']
 filtered_df = rfm_df[rfm_df['Cluster'] == selected_customer_cluster]
 
 # Dropdown for X and Y axis selection in scatter plot
-st.write("### Customer Segmentation based on RFM")
+st.write("### RFM-Driven Customer Segmentation")
 x_axis_option = st.selectbox("Select X-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
 y_axis_option = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recency_log', 'Frequency_log', 'Monetary_log'])
 
@@ -118,12 +122,40 @@ y_axis_option = st.selectbox("Select Y-axis feature for Scatter Plot:", ['Recenc
 fig, ax = plt.subplots()
 scatter = ax.scatter(rfm_df[x_axis_option], rfm_df[y_axis_option], c=rfm_df['Cluster'], cmap='viridis', alpha=0.6)
 ax.scatter(selected_customer_data[x_axis_option], selected_customer_data[y_axis_option], color='red', label='Selected Customer', s=100, edgecolor='black')
-ax.set_title('')
+ax.set_title('Customer Profiles')
 ax.set_xlabel(x_axis_option)
 ax.set_ylabel(y_axis_option)
 plt.colorbar(scatter, ax=ax)
 plt.legend()
 st.pyplot(fig)
+
+# Additional visualizations: Histogram and Box Plot for the selected cluster
+st.write("### Cluster Distributions")
+col1, col2 = st.columns(2)
+
+# Histogram for the selected cluster's RFM metrics
+with col1:
+    st.write(f"Histogram Analysis for Cluster: {selected_customer_cluster}")
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+    sns.histplot(filtered_df['Recency'], bins=10, ax=axs[0], kde=True)
+    axs[0].set_title('Recency')
+    sns.histplot(filtered_df['Frequency'], bins=10, ax=axs[1], kde=True)
+    axs[1].set_title('Frequency')
+    sns.histplot(filtered_df['Monetary'], bins=10, ax=axs[2], kde=True)
+    axs[2].set_title('Monetary')
+    st.pyplot(fig)
+
+# Box Plot for the selected cluster's RFM metrics
+with col2:
+    st.write(f"Box Plot Analysis for Cluster: {selected_customer_cluster}")
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+    sns.boxplot(y=filtered_df['Recency'], ax=axs[0])
+    axs[0].set_title('Recency')
+    sns.boxplot(y=filtered_df['Frequency'], ax=axs[1])
+    axs[1].set_title('Frequency')
+    sns.boxplot(y=filtered_df['Monetary'], ax=axs[2])
+    axs[2].set_title('Monetary')
+    st.pyplot(fig)
 
 # Display updated Customer Segmentation Insights table based on selected customer
 st.write(f"### Customer Segmentation Insights for Cluster: {selected_customer_cluster}")
@@ -150,26 +182,33 @@ model = Pipeline(steps=[
     ('regressor', RandomForestRegressor(n_estimators=100, random_state=42))
 ])
 
-# Train the model and calculate Predicted CLV for each customer
+# Train the model and predict CLV for all customers
 model.fit(X_train, y_train)
 rfm_df['Predicted_CLV'] = model.predict(X)
 
-# Define segmentation based on CLV score
+# Add segmentation labels based on CLV
 rfm_df['Segment'] = pd.qcut(rfm_df['Predicted_CLV'], q=4, labels=['Low Value', 'Mid Value', 'High Value', 'Top Value'])
 
-# Display selected customer’s Predicted CLV Score and Segment
+# Display CLV Score and Segmentation Label for the selected customer
 predicted_clv = rfm_df.loc[customer_id, 'Predicted_CLV']
 segment_label = rfm_df.loc[customer_id, 'Segment']
-st.write(f"**Predicted CLV Score for Customer: {customer_id}:** ${predicted_clv:.2f}")
+st.write(f"**Predicted CLV Score for Customer {customer_id}:** ${predicted_clv:.2f}")
 st.write(f"**Customer Segment:** {segment_label}")
 
-# Actionable Insights based on segment
-st.write("**Actionable Insights:**")
+# Actionable Insights based on Segment
 if segment_label == 'Top Value':
-    st.write("Retention strategies, loyalty rewards, and exclusive offers are key to maintaining engagement for high-value customers.")
+    st.write("**Actionable Insights:** Focus on retention strategies, loyalty rewards, and exclusive offers to maintain engagement.")
 elif segment_label == 'High Value':
-    st.write("Upselling or cross-selling opportunities with personalized recommendations can increase engagement and revenue.")
+    st.write("**Actionable Insights:** Consider upselling or cross-selling opportunities with personalized recommendations.")
 elif segment_label == 'Mid Value':
-    st.write("Targeted promotions may encourage increased purchase frequency and customer retention.")
+    st.write("**Actionable Insights:** Engage with targeted promotions to increase purchase frequency.")
 else:
-    st.write("Re-engagement campaigns and personalized offers may help retain low-value customers.")
+    st.write("**Actionable Insights:** Re-engagement campaigns and personalized offers may help retain this customer.")
+
+# Model Evaluation
+y_pred = model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+st.write(f"**Model Performance:**")
+st.write(f"Mean Absolute Error (MAE): {mae:.2f}")
+st.write(f"R² Score: {r2:.2f}")
