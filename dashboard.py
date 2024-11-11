@@ -192,7 +192,7 @@ rfm_df['Segment'] = pd.qcut(rfm_df['Predicted_CLV'], q=4, labels=['Low Value', '
 # Display CLV Score and Segmentation Label for the selected customer
 predicted_clv = rfm_df.loc[customer_id, 'Predicted_CLV']
 segment_label = rfm_df.loc[customer_id, 'Segment']
-st.write(f"**Predicted CLV Score for Customer {customer_id}:** ${predicted_clv:.2f}")
+st.write(f"**Predicted CLV Score for Customer:  {customer_id}:**  PHP {predicted_clv:.2f}")
 st.write(f"**Customer Segment:** {segment_label}")
 
 # Actionable Insights based on Segment
